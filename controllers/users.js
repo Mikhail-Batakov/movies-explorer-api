@@ -7,12 +7,13 @@ const {
 
 const userModel = require('../models/user');
 
+const { SALT_ROUNDS } = require('../utils/config');
+
+const { ERROR_TEMPLATES } = require('../utils/errorMessages');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
 const { signToken } = require('../utils/jwtAuth');
-
-const SALT_ROUNDS = 10; // перенести
 
 const getUserInfo = (req, res, next) => {
   userModel
@@ -22,8 +23,8 @@ const getUserInfo = (req, res, next) => {
       res.status(StatusCodes.OK).send(user);
     })
     .catch((err) => {
-      if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Пользователь не найден'));
+      if (err instanceof NotFoundError) {
+        next(new NotFoundError(ERROR_TEMPLATES.user.userNotFound));
       } else {
         next(err);
       }
@@ -49,9 +50,9 @@ const createUser = (req, res, next) => {
         .catch((err) => {
           if (err instanceof mongoose.Error.CastError
             || err instanceof mongoose.Error.ValidationError) {
-            next(new BadRequestError(`Отправлены некорректные данные при создании пользователя: ${err.message}`));
+            next(new BadRequestError(ERROR_TEMPLATES.user.invalidUserData));
           } else if (err.code === 11000) {
-            next(new ConflictError('Пользователь с таким email уже зарегистрирован'));
+            next(new ConflictError(ERROR_TEMPLATES.user.userConflict));
           } else {
             next(err);
           }
@@ -59,7 +60,6 @@ const createUser = (req, res, next) => {
     })
     .catch(next);
 };
-
 const updateProfile = (req, res, next) => {
   const { name, email } = req.body;
 
@@ -72,9 +72,9 @@ const updateProfile = (req, res, next) => {
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError
          || err instanceof mongoose.Error.ValidationError) {
-        next(new BadRequestError(`Переданы некорректные данные при обновлении профиля: ${err.name}`));
+        next(new BadRequestError(ERROR_TEMPLATES.user.invalidProfileData));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Пользователь по указанному id не найден'));
+        next(new NotFoundError(ERROR_TEMPLATES.user.userNotFound));
       } else {
         next(err);
       }
@@ -86,7 +86,7 @@ const login = (req, res, next) => {
 
   // Проверяем, что оба поля присутствуют
   if (!email || !password) {
-    return next(new BadRequestError('Необходимо заполнить все поля'));
+    return next(new BadRequestError(ERROR_TEMPLATES.user.unauthorized));
   }
 
   return userModel.findUserByCredentials(email, password)

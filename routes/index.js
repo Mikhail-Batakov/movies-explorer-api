@@ -5,6 +5,7 @@ const { createUser, login } = require('../controllers/users');
 const auth = require('../middlewares/auth');
 const { validateSignUp, validateSignIn } = require('../middlewares/validate');
 const NotFoundError = require('../errors/NotFoundError');
+const { ERROR_TEMPLATES } = require('../utils/errorMessages');
 
 router.post('/signup', validateSignUp, createUser);
 router.post('/signin', validateSignIn, login);
@@ -16,7 +17,7 @@ router.use('/users', userRouter);
 router.use('/movies', movieRouter);
 
 router.use('*', (req, res, next) => {
-  next(new NotFoundError('Запрашиваемая страница не найдена'));
+  next(new NotFoundError(ERROR_TEMPLATES.pageNotFound));
 });
 
 module.exports = router;

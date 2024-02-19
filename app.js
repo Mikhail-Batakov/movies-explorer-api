@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const express = require('express');
@@ -10,12 +11,7 @@ const limiter = require('./utils/limiter');
 const router = require('./routes');
 const errorHandler = require('./middlewares/errorHandler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-
-const { PORT = 3000, DB_URL = 'mongodb://127.0.0.1:27017/bitfilmsdb' } = process.env; // исправить
-
-mongoose.connect(DB_URL, {
-
-});
+const { PORT, mongoDbUrl } = require('./utils/config');
 
 const app = express();
 
@@ -37,7 +33,15 @@ app.use(errorLogger); // подключаем логгер ошибок
 app.use(errors());
 app.use(errorHandler);
 
+mongoose.connect(mongoDbUrl)
+  .then(() => {
+    console.log(`БД: ${mongoDbUrl} успешно подключено`);
+  })
+  .catch((error) => {
+    console.error('Ошибка подключения к БД:', error.message);
+    process.exit(1); // Завершаем процесс при ошибке подключения
+  });
+
 app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
   console.log(`Приложение слушает порт: ${PORT}`);
 });

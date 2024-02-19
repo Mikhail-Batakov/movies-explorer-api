@@ -8,6 +8,8 @@ const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ForbiddenError = require('../errors/ForbiddenError');
 
+const { ERROR_TEMPLATES, SUCCESS_TEMPLATES } = require('../utils/errorMessages');
+
 const getMovies = (req, res, next) => {
   const userId = req.user._id; // Получаем идентификатор текущего пользователя
   movieModel
@@ -29,7 +31,7 @@ const createMovie = (req, res, next) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        next(new BadRequestError(`Отправлены некорректные данные при создании фильма: ${err.message}`));
+        next(new BadRequestError(ERROR_TEMPLATES.movie.invalidMovieData));
       } else {
         next(err);
       }
@@ -43,21 +45,21 @@ const delMovieById = (req, res, next) => {
     .findById(movieId).orFail()
     .then((movie) => {
       if (!movie.owner.equals(userId)) {
-        throw new ForbiddenError('Попытка удалить чужой фильм');
+        throw new ForbiddenError(ERROR_TEMPLATES.movie.forbiddenDelete);
       }
 
       return movieModel.deleteOne({ _id: movieId }).orFail();
     })
     .then(() => {
       res.status(StatusCodes.OK).send({
-        message: 'Фильм успешно удален',
+        message: SUCCESS_TEMPLATES.movieDeleted,
       });
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
-        next(new BadRequestError('Неверный формат id фильма'));
+        next(new BadRequestError(ERROR_TEMPLATES.movie.invalidMovieIdFormat));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Фильм по указанному id не найден'));
+        next(new NotFoundError(ERROR_TEMPLATES.movie.movieNotFound));
       } else {
         next(err);
       }
@@ -68,5 +70,4 @@ module.exports = {
   getMovies,
   createMovie,
   delMovieById,
-
 };
