@@ -1,6 +1,4 @@
 # movies-explorer-api
-
-# movies-explorer-api
 Дипломный проект 'movies-explorer' бэкенд часть
 
 [ссылка на репозиторий](https://github.com/Mikhail-Batakov/movies-explorer-api)
